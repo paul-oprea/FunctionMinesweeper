@@ -1,0 +1,234 @@
+<!doctype html>
+
+<html>
+<meta charset=utf-8>
+<TITLE>Andrew's Function Minesweeper Game</TITLE>
+<style>
+.grid{width:25px;height:25px;font-size:10px;font-family:Arial Narrow;background-color:white;
+    border: 1px solid #F0F0F0;
+    padding: 2px;
+    box-shadow: 2px 4px #E0E0E0;
+}
+.success {font-size:12px; background-color:green}
+.failure {font-size:12px; background-color:red}
+.legend{font-weight:bold;font-size:9px;text-align:center;height:25px;valign:middle;}
+.function{font-size:20px;font-weight:bold;width:200px;}
+.progressBar{align:right;width:100%;}
+.progressBar{align:right;width:100%;font-weight:bold;color:red;}
+</style>
+<script language="javascript">
+
+/**
+A simple Minesweeper-like program for teaching children functions
+Copyright (C) 2018 Paul Tudor Oprea
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>
+*/
+
+
+// Default values for the grid size (x0/y0, xMax/yMax)
+var __Y0 = 0;
+var __X0 = 0;
+var __COLS = 75;
+var __ROWS = 16;
+
+// Global array for holding the solution points
+var arrSolutions = [];
+
+
+// delete children of a given DOM node
+function deleteChildren(node){
+	if (node.childNodes.length > 0)
+		node.removeChild(node.childNodes[0]);
+	
+}
+
+
+/** sweeps the function subdomain given by the input parameters
+ * and calculates either the minimum or the maximum taken by the
+ * function in that subdomain
+ * @param - xRangeFrom - x subdomain start
+ * @param - xRangeTp - x subdomain end
+ * @param - boolMin - true if minimum is needed, false for max
+ * @return - min or max value
+**/
+function findMaxMin(xRangeFrom, xRangeTo, boolMin){
+	var yMinMax = toCheck(xRangeFrom);
+	for ( var x = xRangeFrom + 1; x <= xRangeTo; x++ )
+	{
+		yMinMax = ( boolMin ? Math.min(yMinMax, toCheck(x) ) : Math.max(yMinMax, toCheck(x) ) );
+	}
+	
+	return yMinMax;
+}
+
+/** attempts to calculate the function given in the input box
+ * @param - x
+ * @return - function value
+**/
+function toCheck(x){
+	var ret = 0;
+	try{
+		ret = eval(document.getElementById("fnEval").value);
+	} catch (err){
+		document.getElementById("progressBar").innerText = 'I was not able to understand the function, please try something else';
+	}
+	return ret;
+}
+
+/** wipe the board and redraw the game basically **/
+function refreshContents() {
+    deleteChildren(document.getElementById("myDiv"));
+	document.getElementById("progressBar").innerText = '';
+	document.getElementById("errorBar").innerText = '';
+	
+	autoDetermineRange();
+	
+	var tableNode = document.createElement("TABLE");
+	for ( var r = __ROWS; r >= __Y0; r-- )
+		addRow( tableNode, r );
+		
+	addBottomRow(tableNode, -1);
+	
+    document.getElementById("myDiv").appendChild(tableNode);
+
+}
+
+function addRow ( nodeTable, intRow ) {
+    var rowNode = document.createElement("TR");
+	for ( var c = __X0; c <= __COLS; c++ ) {
+		var cellNode = document.createElement("TD");
+		addButton( cellNode, intRow, c );
+		rowNode.appendChild( cellNode );
+	}
+	nodeTable.appendChild( rowNode );
+		
+
+}
+
+/** adds a bottom axis **/
+function addBottomRow ( nodeTable, intRow ) {
+    var rowNode = document.createElement("TR");
+	rowNode.class = 'legend';
+	for ( var c = __X0; c <= __COLS; c++ ) {
+		var cellNode = document.createElement("TD");
+		cellNode.className = 'legend';
+		addLegend( cellNode, intRow, c );
+		rowNode.appendChild( cellNode );
+	}
+	nodeTable.appendChild( rowNode );
+		
+
+}
+
+/** adds cells to the legend **/
+// not happy with the naming convention but too lazy to change now
+function addLegend( nodeCell, intRow, intCol ) {
+    var node = document.createTextNode(intCol);
+	nodeCell.appendChild(node);
+}
+
+/** adds a grid button
+**/
+
+function addButton( nodeCell, intRow, intCol ) {
+    var node = document.createElement("INPUT");
+	node.type = 'button';
+	node.className= 'grid';
+	node.value = intRow.toString();
+	node.title = intRow + ' asks: Am I the right result for ' + intCol + ' ?';
+	node.setAttribute( "metax", intCol);
+	node.setAttribute( "metay", intRow);
+	node.id = intCol.toString().concat("|").concat(intRow.toString());
+	node.onclick = new Function("assertFunction('" + node.id + "')");
+	nodeCell.appendChild(node);
+}
+
+
+/** if a user choice is correct, it is marked as found (extracted from the map)
+ * until all solutions are found without error (game ends with success message)
+ * if any error, kaboom.
+**/
+function assertFunction(strNodeName){
+	var node = document.getElementById(strNodeName);
+	var x = parseInt(node.getAttribute('metax').toString(), 10);
+	var y = parseInt(node.getAttribute('metay').toString(), 10);
+	
+	if (y == toCheck(x)) {
+		node.value = '\u263A;';
+		node.style.fontSize = '12px';
+		node.style.backgroundColor = 'green';
+		document.getElementById("progressBar").innerText = 'Well done!';
+		arrSolutions = arrSolutions .filter( yi => yi!= y );
+		if ( arrSolutions.length < 1 )
+			alert('YOU WON');
+	}
+	else
+	{
+		node.value = '\u2639;';
+		node.style.fontSize = '12px';
+		node.style.backgroundColor = 'red';
+		document.getElementById("progressBar").innerText = 'BOOOOM!! You stepped on a landmine';
+		kaputt();	
+	}
+		
+}
+
+/** fills the board with red (except any correct guesses) **/
+function kaputt(){
+	var list = document.getElementsByTagName("INPUT");
+	for (var i = 0; i < list.length; i++)
+		if (!isNaN( list[ i ].value ))
+		{
+			list[i].style.backgroundColor = 'red';
+			list[i].value = 'x';
+		}
+}
+
+/** gets the useable grid size from the size of the current browser window;
+ * if the aspect ratio of the window is such that it is possible to 
+ * plot an Y for every X without scrolling, then it does it, otherwise
+ * it trims so that counting from X=0, all Y solutions fit in the window
+ * After the grid has been calculated, stores the function values in a map.
+**/
+function autoDetermineRange(){
+	//Firstly understand the size of the window;
+	var intXSize = Math.floor( ( window.innerWidth  || document.documentElement.clientWidth  || document.body.clientWidth  ) / 32 );
+	var intYSize = Math.floor( ( window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight ) / 32 );
+	
+	//Assuming the function is such that it fits into the window for all x which fit into the width
+	var minY = findMaxMin( 0, intXSize, true); var maxY = findMaxMin( 0, intXSize, false);
+	//if the Y range is larger than the window height, then we need to reduce the X range until the range fits
+	
+	while (intYSize < ( maxY - minY )){
+		intXSize--;
+		var minY = findMaxMin( 0, intXSize, true); var maxY = findMaxMin( 0, intXSize, false);
+	}
+	
+	intYSize = Math.min( intYSize, maxY - minY);
+	//intYSize = maxY - minY;
+	
+	__Y0 = minY;
+	__ROWS = intYSize + minY;
+	__COLS = intXSize;
+	
+	arrSolutions =Array.from(Array(__COLS + 1).keys()).map( toCheck );
+	
+}
+</script>
+<body onload="refreshContents()"><div id="myDiv"></div>
+<p>The secret is: <input id="fnEval" value="x*x-1" class="function" maxlength="20"/><input type="button" value="Reset" onclick="refreshContents()"/></p>
+<p><span id="progressBar" class="progressBar"></span></p></body>
+<p><span id="errorBar" class="errorBar"></span></p></body>
+</html>
