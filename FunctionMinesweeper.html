@@ -9,12 +9,14 @@
     padding: 2px;
     box-shadow: 2px 4px #E0E0E0;
 }
+.gridcell{position:absolute;}
 .success {font-size:12px; background-color:green}
 .failure {font-size:12px; background-color:red}
 .legend{font-weight:bold;font-size:9px;text-align:center;height:25px;valign:middle;}
 .function{font-size:20px;font-weight:bold;width:200px;}
 .progressBar{align:right;width:100%;}
 .progressBar{align:right;width:100%;font-weight:bold;color:red;}
+.controlPanel{position:absolute;}
 </style>
 <script language="javascript">
 
@@ -36,8 +38,23 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
+// Default grid transposed
+var boolTransposed = true;
 
-// Default values for the grid size (x0/y0, xMax/yMax)
+function transpose(point, boolTranspose){
+	if ( boolTranspose )
+		return new Point ( point.y, point.x );
+	else
+		return point;
+}
+
+var Point = function( intX, intY )
+{
+	this.x = intX;
+	this.y = intY;
+}
+
+// Default values for the logical ()in-memory grid size (x0/y0, xMax/yMax)
 var __Y0 = 0;
 var __X0 = 0;
 var __COLS = 75;
@@ -45,7 +62,6 @@ var __ROWS = 16;
 
 // Global array for holding the solution points
 var arrSolutions = [];
-
 
 // delete children of a given DOM node
 function deleteChildren(node){
@@ -95,21 +111,28 @@ function refreshContents() {
 	
 	autoDetermineRange();
 	
-	var tableNode = document.createElement("TABLE");
+	var tableNode = document.createElement("DIV");
 	for ( var r = __ROWS; r >= __Y0; r-- )
 		addRow( tableNode, r );
 		
 	addBottomRow(tableNode, -1);
 	
     document.getElementById("myDiv").appendChild(tableNode);
-
+	document.getElementById("controlPanel").style.top = 
+		(( __ROWS + 3)  * 30  + 10 ) + 'px';
 }
 
 function addRow ( nodeTable, intRow ) {
-    var rowNode = document.createElement("TR");
-	for ( var c = __X0; c <= __COLS; c++ ) {
-		var cellNode = document.createElement("TD");
-		addButton( cellNode, intRow, c );
+    var rowNode = document.createElement("DIV");
+	for ( var c = __X0; c <=  __COLS; c++ ) {
+		var cellNode = document.createElement("DIV");
+		cellNode.className = 'gridcell';
+
+		var pntLogical = new Point( ( c - __X0 ) * 30, ( intRow - __Y0 ) * 30 );
+
+		cellNode.style.left = transpose( pntLogical, boolTransposed ).x + 'px';
+		cellNode.style.top  = transpose( pntLogical, boolTransposed ).y + 'px';
+		addButton( cellNode, new Point( c, intRow ) );
 		rowNode.appendChild( cellNode );
 	}
 	nodeTable.appendChild( rowNode );
@@ -119,11 +142,13 @@ function addRow ( nodeTable, intRow ) {
 
 /** adds a bottom axis **/
 function addBottomRow ( nodeTable, intRow ) {
-    var rowNode = document.createElement("TR");
+    var rowNode = document.createElement("DIV");
 	rowNode.class = 'legend';
 	for ( var c = __X0; c <= __COLS; c++ ) {
-		var cellNode = document.createElement("TD");
-		cellNode.className = 'legend';
+		var cellNode = document.createElement("DIV");
+		cellNode.style.top = ( (  __ROWS + 2)  * 30  + 10 ) + 'px';
+		cellNode.style.left = c * 30 + 'px';
+		cellNode.className = 'legend gridcell';
 		addLegend( cellNode, intRow, c );
 		rowNode.appendChild( cellNode );
 	}
@@ -142,15 +167,15 @@ function addLegend( nodeCell, intRow, intCol ) {
 /** adds a grid button
 **/
 
-function addButton( nodeCell, intRow, intCol ) {
+function addButton( nodeCell, point ) {
     var node = document.createElement("INPUT");
 	node.type = 'button';
 	node.className= 'grid';
-	node.value = intRow.toString();
-	node.title = intRow + ' asks: Am I the right result for ' + intCol + ' ?';
-	node.setAttribute( "metax", intCol);
-	node.setAttribute( "metay", intRow);
-	node.id = intCol.toString().concat("|").concat(intRow.toString());
+	node.value = point.y.toString();
+	node.title = point.y + ' asks: Am I the right result for ' + point.x + ' ?';
+	node.setAttribute( "metax", point.x);
+	node.setAttribute( "metay", point.y);
+	node.id = point.x.toString().concat("|").concat(point.y.toString());
 	node.onclick = new Function("assertFunction('" + node.id + "')");
 	nodeCell.appendChild(node);
 }
@@ -204,6 +229,11 @@ function autoDetermineRange(){
 	//Firstly understand the size of the window;
 	var intXSize = Math.floor( ( window.innerWidth  || document.documentElement.clientWidth  || document.body.clientWidth  ) / 32 );
 	var intYSize = Math.floor( ( window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight ) / 32 );
+
+	var pntCanvasApex = new Point( intXSize, intYSize)
+
+	intXSize = transpose(pntCanvasApex, boolTransposed).x;
+	intYSize = transpose(pntCanvasApex, boolTransposed).y;
 	
 	//Assuming the function is such that it fits into the window for all x which fit into the width
 	var minY = findMaxMin( 0, intXSize, true); var maxY = findMaxMin( 0, intXSize, false);
@@ -216,12 +246,18 @@ function autoDetermineRange(){
 	
 	intYSize = Math.min( intYSize, maxY - minY);
 	//intYSize = maxY - minY;
+
 	
 	__Y0 = minY;
 	__ROWS = intYSize + minY;
 	__COLS = intXSize;
-	
-	arrSolutions =Array.from(Array(__COLS + 1).keys()).map( toCheck );
+	// Default values for the canvas grid size (x0/y0, xMax/yMax)
+/*	
+	var pntGridOrigin = new Point ( __X0, __Y0 );
+	__X0 = transpose( pntGridOrigin, boolTransposed ).x;
+	__Y0 = transpose( pntGridOrigin, boolTransposed ).y;
+*/
+	arrSolutions = Array.from( Array( __COLS + 1 ).keys() ).map( toCheck );
 	
 }
 
@@ -242,7 +278,9 @@ function markComplete(btnCmd){
 
 </script>
 <body onload="refreshContents()"><div id="myDiv"></div>
+<div id="controlPanel" class="controlPanel">
 <p>The secret is: <input id="fnEval" value="x*x-1" class="function" maxlength="20"/><input type="button" value="Reset" onclick="refreshContents()"/><input type="button" value="I give up!" onclick="autoSolve()"/></p>
 <p><span id="progressBar" class="progressBar"></span></p></body>
-<p><span id="errorBar" class="errorBar"></span></p></body>
+<p><span id="errorBar" class="errorBar"></span></p>
+</div></body>
 </html>
