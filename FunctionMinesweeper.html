@@ -39,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
 // Default grid transposed
-var boolTransposed = false;
+var boolTransposed = true;
 
 function transpose(point, boolTranspose){
 	if ( boolTranspose )
@@ -59,8 +59,6 @@ var __Y0 = 0;
 var __X0 = 0;
 var __COLS = 75;
 var __ROWS = 16;
-var __CANVAS_COLS = transpose(new Point( __COLS, 0), boolTransposed).x ;
-var __CANVAS_ROWS = transpose(new Point( 0, __ROWS), boolTransposed).y;
 
 // Global array for holding the solution points
 var arrSolutions = [];
@@ -114,23 +112,26 @@ function refreshContents() {
 	autoDetermineRange();
 	
 	var tableNode = document.createElement("DIV");
-	for ( var r = new Point( __CANVAS_COLS, __CANVAS_ROWS).y; r >= __Y0; r-- )
+	for ( var r = __ROWS; r >= __Y0; r-- )
 		addRow( tableNode, r );
 		
 	addBottomRow(tableNode, -1);
 	
     document.getElementById("myDiv").appendChild(tableNode);
 	document.getElementById("controlPanel").style.top = 
-		( (new Point( __CANVAS_COLS, __CANVAS_ROWS).y + 3)  * 30  + 10 ) + 'px';
+		(( __ROWS + 3)  * 30  + 10 ) + 'px';
 }
 
 function addRow ( nodeTable, intRow ) {
     var rowNode = document.createElement("DIV");
-	for ( var c = __X0; c <= new Point( __CANVAS_COLS, __CANVAS_ROWS).x; c++ ) {
+	for ( var c = __X0; c <=  __COLS; c++ ) {
 		var cellNode = document.createElement("DIV");
 		cellNode.className = 'gridcell';
-		cellNode.style.left = c * 30 + 'px';
-		cellNode.style.top = (new Point( __CANVAS_COLS, __CANVAS_ROWS).y - intRow) * 30 + 'px';
+
+		var pntLogical = new Point( ( c - __X0 ) * 30, ( intRow - __Y0 ) * 30 );
+
+		cellNode.style.left = transpose( pntLogical, boolTransposed ).x + 'px';
+		cellNode.style.top  = transpose( pntLogical, boolTransposed ).y + 'px';
 		addButton( cellNode, new Point( c, intRow ) );
 		rowNode.appendChild( cellNode );
 	}
@@ -143,9 +144,9 @@ function addRow ( nodeTable, intRow ) {
 function addBottomRow ( nodeTable, intRow ) {
     var rowNode = document.createElement("DIV");
 	rowNode.class = 'legend';
-	for ( var c = __X0; c <= new Point( __CANVAS_COLS, __CANVAS_ROWS).x; c++ ) {
+	for ( var c = __X0; c <= __COLS; c++ ) {
 		var cellNode = document.createElement("DIV");
-		cellNode.style.top = ( (new Point( __CANVAS_COLS, __CANVAS_ROWS).y + 2)  * 30  + 10 ) + 'px';
+		cellNode.style.top = ( (  __ROWS + 2)  * 30  + 10 ) + 'px';
 		cellNode.style.left = c * 30 + 'px';
 		cellNode.className = 'legend gridcell';
 		addLegend( cellNode, intRow, c );
@@ -228,6 +229,11 @@ function autoDetermineRange(){
 	//Firstly understand the size of the window;
 	var intXSize = Math.floor( ( window.innerWidth  || document.documentElement.clientWidth  || document.body.clientWidth  ) / 32 );
 	var intYSize = Math.floor( ( window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight ) / 32 );
+
+	var pntCanvasApex = new Point( intXSize, intYSize)
+
+	intXSize = transpose(pntCanvasApex, boolTransposed).x;
+	intYSize = transpose(pntCanvasApex, boolTransposed).y;
 	
 	//Assuming the function is such that it fits into the window for all x which fit into the width
 	var minY = findMaxMin( 0, intXSize, true); var maxY = findMaxMin( 0, intXSize, false);
@@ -240,15 +246,18 @@ function autoDetermineRange(){
 	
 	intYSize = Math.min( intYSize, maxY - minY);
 	//intYSize = maxY - minY;
+
 	
 	__Y0 = minY;
 	__ROWS = intYSize + minY;
 	__COLS = intXSize;
 	// Default values for the canvas grid size (x0/y0, xMax/yMax)
-	__CANVAS_COLS = transpose(new Point( __COLS, 0), boolTransposed).x ;
-	__CANVAS_ROWS = transpose(new Point( 0, __ROWS), boolTransposed).y;
-	
-	arrSolutions = Array.from(Array(__COLS + 1).keys()).map( toCheck );
+/*	
+	var pntGridOrigin = new Point ( __X0, __Y0 );
+	__X0 = transpose( pntGridOrigin, boolTransposed ).x;
+	__Y0 = transpose( pntGridOrigin, boolTransposed ).y;
+*/
+	arrSolutions = Array.from( Array( __COLS + 1 ).keys() ).map( toCheck );
 	
 }
 
