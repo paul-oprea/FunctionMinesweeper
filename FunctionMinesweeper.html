@@ -36,16 +36,32 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
+function transpose(point, boolTranspose){
+	if ( boolTranspose )
+		return new Point ( point.y, point.x );
+	else
+		return point;
+}
 
-// Default values for the grid size (x0/y0, xMax/yMax)
+var Point = function( intX, intY )
+{
+	this.x = intX;
+	this.y = intY;
+}
+
+// Default grid transposed
+var boolTransposed = false;
+
+// Default values for the logical ()in-memory grid size (x0/y0, xMax/yMax)
 var __Y0 = 0;
 var __X0 = 0;
 var __COLS = 75;
 var __ROWS = 16;
+var __CANVAS_COLS = transpose(new Point( __COLS, 0), boolTransposed).x ;
+var __CANVAS_ROWS = transpose(new Point( 0, __ROWS), boolTransposed).y;
 
 // Global array for holding the solution points
 var arrSolutions = [];
-
 
 // delete children of a given DOM node
 function deleteChildren(node){
@@ -96,7 +112,7 @@ function refreshContents() {
 	autoDetermineRange();
 	
 	var tableNode = document.createElement("TABLE");
-	for ( var r = __ROWS; r >= __Y0; r-- )
+	for ( var r = __CANVAS_ROWS; r >= __Y0; r-- )
 		addRow( tableNode, r );
 		
 	addBottomRow(tableNode, -1);
@@ -107,9 +123,9 @@ function refreshContents() {
 
 function addRow ( nodeTable, intRow ) {
     var rowNode = document.createElement("TR");
-	for ( var c = __X0; c <= __COLS; c++ ) {
+	for ( var c = __X0; c <= __CANVAS_COLS; c++ ) {
 		var cellNode = document.createElement("TD");
-		addButton( cellNode, intRow, c );
+		addButton( cellNode, new Point( intRow, c ) );
 		rowNode.appendChild( cellNode );
 	}
 	nodeTable.appendChild( rowNode );
@@ -121,7 +137,7 @@ function addRow ( nodeTable, intRow ) {
 function addBottomRow ( nodeTable, intRow ) {
     var rowNode = document.createElement("TR");
 	rowNode.class = 'legend';
-	for ( var c = __X0; c <= __COLS; c++ ) {
+	for ( var c = __X0; c <= __CANVAS_COLS; c++ ) {
 		var cellNode = document.createElement("TD");
 		cellNode.className = 'legend';
 		addLegend( cellNode, intRow, c );
@@ -142,15 +158,15 @@ function addLegend( nodeCell, intRow, intCol ) {
 /** adds a grid button
 **/
 
-function addButton( nodeCell, intRow, intCol ) {
+function addButton( nodeCell, point ) {
     var node = document.createElement("INPUT");
 	node.type = 'button';
 	node.className= 'grid';
-	node.value = intRow.toString();
-	node.title = intRow + ' asks: Am I the right result for ' + intCol + ' ?';
-	node.setAttribute( "metax", intCol);
-	node.setAttribute( "metay", intRow);
-	node.id = intCol.toString().concat("|").concat(intRow.toString());
+	node.value = point.y.toString();
+	node.title = point.y + ' asks: Am I the right result for ' + point.x + ' ?';
+	node.setAttribute( "metax", point.x);
+	node.setAttribute( "metay", point.y);
+	node.id = point.x.toString().concat("|").concat(point.y.toString());
 	node.onclick = new Function("assertFunction('" + node.id + "')");
 	nodeCell.appendChild(node);
 }
@@ -220,8 +236,11 @@ function autoDetermineRange(){
 	__Y0 = minY;
 	__ROWS = intYSize + minY;
 	__COLS = intXSize;
+	// Default values for the canvas grid size (x0/y0, xMax/yMax)
+	__CANVAS_COLS = transpose(new Point( __COLS, 0), boolTransposed).x ;
+	__CANVAS_ROWS = transpose(new Point( 0, __ROWS), boolTransposed).y;
 	
-	arrSolutions =Array.from(Array(__COLS + 1).keys()).map( toCheck );
+	arrSolutions = Array.from(Array(__COLS + 1).keys()).map( toCheck );
 	
 }
 
