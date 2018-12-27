@@ -166,9 +166,7 @@ function assertFunction(strNodeName){
 	var y = parseInt(node.getAttribute('metay').toString(), 10);
 	
 	if (y == toCheck(x)) {
-		node.value = '\u263A;';
-		node.style.fontSize = '12px';
-		node.style.backgroundColor = 'green';
+		markComplete(node);
 		document.getElementById("progressBar").innerText = 'Well done!';
 		arrSolutions = arrSolutions .filter( yi => yi!= y );
 		if ( arrSolutions.length < 1 )
@@ -226,9 +224,25 @@ function autoDetermineRange(){
 	arrSolutions =Array.from(Array(__COLS + 1).keys()).map( toCheck );
 	
 }
+
+function autoSolve(){
+	var completeSolution = Array.from(Array(__COLS + 1).keys()).map( toCheck );
+	for (var i = 0; completeSolution.length; i++)
+		markComplete(document.getElementById( i.toString() + '|' + completeSolution[i] ));
+
+}
+
+function markComplete(btnCmd){
+	if (typeof(btnCmd) != 'undefined' ){
+		btnCmd.className = 'success grid';
+		btnCmd.value = '\u263A;';
+	}
+		
+}
+
 </script>
 <body onload="refreshContents()"><div id="myDiv"></div>
-<p>The secret is: <input id="fnEval" value="x*x-1" class="function" maxlength="20"/><input type="button" value="Reset" onclick="refreshContents()"/></p>
+<p>The secret is: <input id="fnEval" value="x*x-1" class="function" maxlength="20"/><input type="button" value="Reset" onclick="refreshContents()"/><input type="button" value="I give up!" onclick="autoSolve()"/></p>
 <p><span id="progressBar" class="progressBar"></span></p></body>
 <p><span id="errorBar" class="errorBar"></span></p></body>
 </html>
