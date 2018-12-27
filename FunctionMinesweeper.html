@@ -9,12 +9,14 @@
     padding: 2px;
     box-shadow: 2px 4px #E0E0E0;
 }
+.gridcell{position:absolute;}
 .success {font-size:12px; background-color:green}
 .failure {font-size:12px; background-color:red}
 .legend{font-weight:bold;font-size:9px;text-align:center;height:25px;valign:middle;}
 .function{font-size:20px;font-weight:bold;width:200px;}
 .progressBar{align:right;width:100%;}
 .progressBar{align:right;width:100%;font-weight:bold;color:red;}
+.controlPanel{position:absolute;}
 </style>
 <script language="javascript">
 
@@ -36,6 +38,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
+// Default grid transposed
+var boolTransposed = false;
+
 function transpose(point, boolTranspose){
 	if ( boolTranspose )
 		return new Point ( point.y, point.x );
@@ -48,9 +53,6 @@ var Point = function( intX, intY )
 	this.x = intX;
 	this.y = intY;
 }
-
-// Default grid transposed
-var boolTransposed = false;
 
 // Default values for the logical ()in-memory grid size (x0/y0, xMax/yMax)
 var __Y0 = 0;
@@ -111,21 +113,25 @@ function refreshContents() {
 	
 	autoDetermineRange();
 	
-	var tableNode = document.createElement("TABLE");
-	for ( var r = __CANVAS_ROWS; r >= __Y0; r-- )
+	var tableNode = document.createElement("DIV");
+	for ( var r = new Point( __CANVAS_COLS, __CANVAS_ROWS).y; r >= __Y0; r-- )
 		addRow( tableNode, r );
 		
 	addBottomRow(tableNode, -1);
 	
     document.getElementById("myDiv").appendChild(tableNode);
-
+	document.getElementById("controlPanel").style.top = 
+		( (new Point( __CANVAS_COLS, __CANVAS_ROWS).y + 3)  * 30  + 10 ) + 'px';
 }
 
 function addRow ( nodeTable, intRow ) {
-    var rowNode = document.createElement("TR");
-	for ( var c = __X0; c <= __CANVAS_COLS; c++ ) {
-		var cellNode = document.createElement("TD");
-		addButton( cellNode, new Point( intRow, c ) );
+    var rowNode = document.createElement("DIV");
+	for ( var c = __X0; c <= new Point( __CANVAS_COLS, __CANVAS_ROWS).x; c++ ) {
+		var cellNode = document.createElement("DIV");
+		cellNode.className = 'gridcell';
+		cellNode.style.left = c * 30 + 'px';
+		cellNode.style.top = (new Point( __CANVAS_COLS, __CANVAS_ROWS).y - intRow) * 30 + 'px';
+		addButton( cellNode, new Point( c, intRow ) );
 		rowNode.appendChild( cellNode );
 	}
 	nodeTable.appendChild( rowNode );
@@ -135,11 +141,13 @@ function addRow ( nodeTable, intRow ) {
 
 /** adds a bottom axis **/
 function addBottomRow ( nodeTable, intRow ) {
-    var rowNode = document.createElement("TR");
+    var rowNode = document.createElement("DIV");
 	rowNode.class = 'legend';
-	for ( var c = __X0; c <= __CANVAS_COLS; c++ ) {
-		var cellNode = document.createElement("TD");
-		cellNode.className = 'legend';
+	for ( var c = __X0; c <= new Point( __CANVAS_COLS, __CANVAS_ROWS).x; c++ ) {
+		var cellNode = document.createElement("DIV");
+		cellNode.style.top = ( (new Point( __CANVAS_COLS, __CANVAS_ROWS).y + 2)  * 30  + 10 ) + 'px';
+		cellNode.style.left = c * 30 + 'px';
+		cellNode.className = 'legend gridcell';
 		addLegend( cellNode, intRow, c );
 		rowNode.appendChild( cellNode );
 	}
@@ -261,7 +269,9 @@ function markComplete(btnCmd){
 
 </script>
 <body onload="refreshContents()"><div id="myDiv"></div>
+<div id="controlPanel" class="controlPanel">
 <p>The secret is: <input id="fnEval" value="x*x-1" class="function" maxlength="20"/><input type="button" value="Reset" onclick="refreshContents()"/><input type="button" value="I give up!" onclick="autoSolve()"/></p>
 <p><span id="progressBar" class="progressBar"></span></p></body>
-<p><span id="errorBar" class="errorBar"></span></p></body>
+<p><span id="errorBar" class="errorBar"></span></p>
+</div></body>
 </html>
