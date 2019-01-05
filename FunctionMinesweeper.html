@@ -4,7 +4,7 @@
 <meta charset=utf-8>
 <TITLE>Andrew's Function Minesweeper Game</TITLE>
 <style>
-.grid{width:25px;height:25px;font-size:10px;font-family:Arial Narrow;background-color:white;
+.grid{width:25px;height:25px;font-size:10px;font-family:Arial Narrow,helvetica;background-color:white;
     border: 1px solid #F0F0F0;
     padding: 2px;
     box-shadow: 2px 4px #E0E0E0;
@@ -12,7 +12,7 @@
 .gridcell{position:absolute;}
 .success {font-size:12px; background-color:green}
 .failure {font-size:12px; background-color:red}
-.legend{font-weight:bold;font-size:9px;text-align:center;height:25px;valign:middle;}
+.legend{font-weight:bold;font-size:9px;text-align:center;height:25px;width:25px;vertical-align:middle;}
 .function{font-size:20px;font-weight:bold;width:200px;}
 .progressBar{align:right;width:100%;}
 .progressBar{align:right;width:100%;font-weight:bold;color:red;}
@@ -105,21 +105,25 @@ function toCheck(x){
 
 /** wipe the board and redraw the game basically **/
 function refreshContents() {
-    deleteChildren(document.getElementById("myDiv"));
+	deleteChildren(document.getElementById("myDiv"));
 	document.getElementById("progressBar").innerText = '';
 	document.getElementById("errorBar").innerText = '';
-	
+
 	autoDetermineRange();
-	
+
 	var tableNode = document.createElement("DIV");
 	for ( var r = __ROWS; r >= __Y0; r-- )
 		addRow( tableNode, r );
 		
 	addBottomRow(tableNode, -1);
 	
-    document.getElementById("myDiv").appendChild(tableNode);
+	document.getElementById("myDiv").appendChild(tableNode);
 	document.getElementById("controlPanel").style.top = 
-		(( __ROWS + 3)  * 30  + 10 ) + 'px';
+		transpose( new Point( 
+			(( __COLS + 1)  * 30  ),
+			(( __ROWS + 3)  * 30  )
+			), boolTransposed ).y
+		 + 'px';
 }
 
 function addRow ( nodeTable, intRow ) {
@@ -130,14 +134,20 @@ function addRow ( nodeTable, intRow ) {
 
 		var pntLogical = new Point( ( c - __X0 ) * 30, ( intRow - __Y0 ) * 30 );
 
-		cellNode.style.left = transpose( pntLogical, boolTransposed ).x + 'px';
-		cellNode.style.top  = transpose( pntLogical, boolTransposed ).y + 'px';
+		
+		if ( boolTransposed )
+			cellNode.style.left = ( transpose( pntLogical, boolTransposed ).x + 30 ) + 'px';
+		else
+			cellNode.style.left = transpose( pntLogical, boolTransposed ).x + 'px';
+
+		if ( boolTransposed )
+			cellNode.style.top  = transpose( pntLogical, boolTransposed ).y + 'px';
+		else  //also flip	
+			cellNode.style.top  = ( ( __ROWS + 1 ) * 30 - transpose( pntLogical, boolTransposed ).y ) + 'px';
 		addButton( cellNode, new Point( c, intRow ) );
 		rowNode.appendChild( cellNode );
 	}
 	nodeTable.appendChild( rowNode );
-		
-
 }
 
 /** adds a bottom axis **/
@@ -146,9 +156,11 @@ function addBottomRow ( nodeTable, intRow ) {
 	rowNode.class = 'legend';
 	for ( var c = __X0; c <= __COLS; c++ ) {
 		var cellNode = document.createElement("DIV");
-		cellNode.style.top = ( (  __ROWS + 2)  * 30  + 10 ) + 'px';
-		cellNode.style.left = c * 30 + 'px';
-		cellNode.className = 'legend gridcell';
+		var pntLogical = new Point( c * 30, ( (  __ROWS + 2)  * 30  + 10 ) );
+		cellNode.style.left = ( boolTransposed ? 0 : transpose( pntLogical, boolTransposed ).x ) + 'px';
+		cellNode.style.top  = transpose( pntLogical, boolTransposed ).y + 'px';
+		
+		cellNode.className  = 'legend gridcell';
 		addLegend( cellNode, intRow, c );
 		rowNode.appendChild( cellNode );
 	}
@@ -160,8 +172,13 @@ function addBottomRow ( nodeTable, intRow ) {
 /** adds cells to the legend **/
 // not happy with the naming convention but too lazy to change now
 function addLegend( nodeCell, intRow, intCol ) {
-    var node = document.createTextNode(intCol);
-	nodeCell.appendChild(node);
+	var pnode = document.createElement('P');
+	pnode.className = 'legend';
+	
+    
+	var node = document.createTextNode(intCol);
+	pnode.appendChild(node);
+	nodeCell.appendChild(pnode);
 }
 
 /** adds a grid button
@@ -247,7 +264,6 @@ function autoDetermineRange(){
 	intYSize = Math.min( intYSize, maxY - minY);
 	//intYSize = maxY - minY;
 
-	
 	__Y0 = minY;
 	__ROWS = intYSize + minY;
 	__COLS = intXSize;
@@ -262,7 +278,7 @@ function autoDetermineRange(){
 }
 
 function autoSolve(){
-	var completeSolution = Array.from(Array(__COLS + 1).keys()).map( toCheck );
+	var completeSolution = Array.from(Array(__COLS + 1 ).keys()).map( toCheck );
 	for (var i = 0; completeSolution.length; i++)
 		markComplete(document.getElementById( i.toString() + '|' + completeSolution[i] ));
 
@@ -276,10 +292,20 @@ function markComplete(btnCmd){
 		
 }
 
+function updateTranspose(){
+	boolTransposed = document.getElementById( 'transposed' ).checked;
+	refreshContents();
+}
+
 </script>
 <body onload="refreshContents()"><div id="myDiv"></div>
 <div id="controlPanel" class="controlPanel">
-<p>The secret is: <input id="fnEval" value="x*x-1" class="function" maxlength="20"/><input type="button" value="Reset" onclick="refreshContents()"/><input type="button" value="I give up!" onclick="autoSolve()"/></p>
+<p>The secret is: <input id="fnEval" value="x*x-1" class="function" maxlength="20"/>
+<input type="button" value="Reset" onclick="refreshContents()"/>
+<input type="button" value="I give up!" onclick="autoSolve()"/>
+<input type="checkbox" value="Transposed" checked="true" onchange="updateTranspose()" id="transposed">Transposed</input>
+
+</p>
 <p><span id="progressBar" class="progressBar"></span></p></body>
 <p><span id="errorBar" class="errorBar"></span></p>
 </div></body>
