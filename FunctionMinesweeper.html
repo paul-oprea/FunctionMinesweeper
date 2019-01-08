@@ -4,7 +4,6 @@
 <meta charset=utf-8>
 <TITLE>Andrew's Function Minesweeper Game</TITLE>
 <style>
-.grid{width:25px;height:25px;font-size:10px;font-family:Arial Narrow,helvetica;background-color:white;
     border: 1px solid #F0F0F0;
     padding: 2px;
     box-shadow: 2px 4px #E0E0E0;
@@ -12,7 +11,6 @@
 .gridcell{position:absolute;}
 .success {font-size:12px; background-color:green}
 .failure {font-size:12px; background-color:red}
-.legend{font-weight:bold;font-size:9px;text-align:center;height:25px;width:25px;vertical-align:middle;}
 .function{font-size:20px;font-weight:bold;width:200px;}
 .progressBar{align:right;width:100%;}
 .progressBar{align:right;width:100%;font-weight:bold;color:red;}
@@ -105,12 +103,9 @@ function toCheck(x){
 
 /** wipe the board and redraw the game basically **/
 function refreshContents() {
-	deleteChildren(document.getElementById("myDiv"));
 	document.getElementById("progressBar").innerText = '';
 	document.getElementById("errorBar").innerText = '';
-
 	autoDetermineRange();
-
 	var tableNode = document.createElement("DIV");
 	for ( var r = __ROWS; r >= __Y0; r-- )
 		addRow( tableNode, r );
@@ -119,11 +114,6 @@ function refreshContents() {
 	
 	document.getElementById("myDiv").appendChild(tableNode);
 	document.getElementById("controlPanel").style.top = 
-		transpose( new Point( 
-			(( __COLS + 1)  * 30  ),
-			(( __ROWS + 3)  * 30  )
-			), boolTransposed ).y
-		 + 'px';
 }
 
 function addRow ( nodeTable, intRow ) {
@@ -134,16 +124,6 @@ function addRow ( nodeTable, intRow ) {
 
 		var pntLogical = new Point( ( c - __X0 ) * 30, ( intRow - __Y0 ) * 30 );
 
-		
-		if ( boolTransposed )
-			cellNode.style.left = ( transpose( pntLogical, boolTransposed ).x + 30 ) + 'px';
-		else
-			cellNode.style.left = transpose( pntLogical, boolTransposed ).x + 'px';
-
-		if ( boolTransposed )
-			cellNode.style.top  = transpose( pntLogical, boolTransposed ).y + 'px';
-		else  //also flip	
-			cellNode.style.top  = ( ( __ROWS + 1 ) * 30 - transpose( pntLogical, boolTransposed ).y ) + 'px';
 		addButton( cellNode, new Point( c, intRow ) );
 		rowNode.appendChild( cellNode );
 	}
