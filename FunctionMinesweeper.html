@@ -2,7 +2,7 @@
 
 <html>
 <meta charset=utf-8>
-<TITLE>Andrew's Function Minesweeper Game</TITLE>
+<TITLE>Function Minesweeper Game</TITLE>
 <style>
 .grid{width:25px;height:25px;font-size:10px;font-family:Arial Narrow,helvetica;background-color:white;
     border: 1px solid #F0F0F0;
@@ -120,8 +120,8 @@ function refreshContents() {
 	document.getElementById("myDiv").appendChild(tableNode);
 	document.getElementById("controlPanel").style.top = 
 		transpose( new Point( 
-			(( __COLS + 1)  * 30  ),
-			(( __ROWS + 3)  * 30  )
+			(( __COLS - __X0 + 1)  * 30  ),
+			(( __ROWS - __Y0 + 2)  * 30  )
 			), boolTransposed ).y
 		 + 'px';
 }
@@ -143,7 +143,7 @@ function addRow ( nodeTable, intRow ) {
 		if ( boolTransposed )
 			cellNode.style.top  = transpose( pntLogical, boolTransposed ).y + 'px';
 		else  //also flip	
-			cellNode.style.top  = ( ( __ROWS + 1 ) * 30 - transpose( pntLogical, boolTransposed ).y ) + 'px';
+			cellNode.style.top  = ( ( __ROWS - __Y0 + 0 ) * 30 - transpose( pntLogical, boolTransposed ).y ) + 'px';
 		addButton( cellNode, new Point( c, intRow ) );
 		rowNode.appendChild( cellNode );
 	}
@@ -156,7 +156,7 @@ function addBottomRow ( nodeTable, intRow ) {
 	rowNode.class = 'legend';
 	for ( var c = __X0; c <= __COLS; c++ ) {
 		var cellNode = document.createElement("DIV");
-		var pntLogical = new Point( ( c - __X0 ) * 30, ( (  __ROWS + 2)  * 30  + 10 ) );
+		var pntLogical = new Point( ( c - __X0 ) * 30, ( (  __ROWS - __Y0 + 1)  * 30  + 10 ) );
 		cellNode.style.left = ( boolTransposed ? 0 : transpose( pntLogical, boolTransposed ).x ) + 'px';
 		cellNode.style.top  = transpose( pntLogical, boolTransposed ).y + 'px';
 		
@@ -256,12 +256,12 @@ function autoDetermineRange(){
 	intYSize = transpose(pntCanvasApex, boolTransposed).y;
 	
 	//Assuming the function is such that it fits into the window for all x which fit into the width
-	var minY = findMaxMin( 0, intXSize, true); var maxY = findMaxMin( 0, intXSize, false);
+	var minY = findMaxMin( __X0, intXSize, true); var maxY = findMaxMin( __X0, intXSize, false);
 	//if the Y range is larger than the window height, then we need to reduce the X range until the range fits
 	
 	while (intYSize < ( maxY - minY )){
 		intXSize--;
-		var minY = findMaxMin( 0, intXSize, true); var maxY = findMaxMin( 0, intXSize, false);
+		var minY = findMaxMin( __X0, intXSize, true); var maxY = findMaxMin( __X0, intXSize, false);
 	}
 	
 	intYSize = Math.min( intYSize, maxY - minY);
