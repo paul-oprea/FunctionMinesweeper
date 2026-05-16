@@ -1,0 +1,178 @@
+<!DOCTYPE HTML>
+
+<html>
+   <head>
+      <title>Exploring Function Composition</title>
+      <style>
+         #mycanvas {
+           .clientWidth: 1000px;
+           .clientHeight:1000px;
+            margin: 0px auto;
+         }
+		.slidecontainer {
+		  width: 100%; /* Width of the outside container */
+		}
+
+		/* The slider itself */
+		.slider {
+		  -webkit-appearance: none;  /* Override default CSS styles */
+		  appearance: none;
+		  width: 100%; /* Full-width */
+		  height: 25px; /* Specified height */
+		  background: #d3d3d3; /* Grey background */
+		  outline: none; /* Remove outline */
+		  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+		  -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+		  transition: opacity .2s;
+		}
+
+		/* Mouse-over effects */
+		.slider:hover {
+		  opacity: 1; /* Fully shown on mouse-over */
+		}
+
+		/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+		.slider::-webkit-slider-thumb {
+		  -webkit-appearance: none; /* Override default look */
+		  appearance: none;
+		  width: 25px; /* Set a specific slider handle width */
+		  height: 25px; /* Slider handle height */
+		  background: #04AA6D; /* Green background */
+		  cursor: pointer; /* Cursor on hover */
+		}
+
+		.slider::-moz-range-thumb {
+		  width: 25px; /* Set a specific slider handle width */
+		  height: 25px; /* Slider handle height */
+		  background: #04AA6D; /* Green background */
+		  cursor: pointer; /* Cursor on hover */
+		}		 
+      </style>
+      
+      <script type = "text/javascript">
+		var intOX = 0;
+		
+		function drawAxes(objCtx) {
+			drawLine( objCtx, intOX, 0, intOX, objCtx.canvas.clientHeight, 2, '#000000');
+			drawLine( objCtx, 0, objCtx.canvas.clientHeight/2, objCtx.canvas.clientWidth, objCtx.canvas.clientHeight/2, 2, '#000000');
+		}
+		
+		function drawLine(
+			objCtx
+			, intX0
+			, intY0
+			, intX1
+			, intY1
+			, intLineWidth
+			, strStrokeStyle
+		) {
+			objCtx.beginPath();
+			objCtx.moveTo(intX0, intY0);
+			objCtx.lineTo(intX1, intY1);
+			objCtx.strokeStyle = strStrokeStyle;
+			objCtx.strokeWidth = strStrokeStyle;
+			objCtx.closePath();
+			objCtx.stroke();			
+		}
+
+		var squeeze=10;
+	  
+         function drawShape() {
+            
+            // get the canvas element using the DOM
+            var canvas = document.getElementById('mycanvas');
+            
+            // Make sure we don't execute when canvas isn't supported
+            if (canvas.getContext) {
+               // use getContext to use the canvas for drawing
+			   var ctx = canvas.getContext('2d');
+				drawAxes( ctx );
+
+
+            } else {
+               alert('You need Safari or Firefox 1.5+ to see this demo.');
+            }
+         }
+		 
+		function nextTickStep ( squeeze ) {
+            var canvas = document.getElementById('mycanvas');
+			   var ctx = canvas.getContext('2d');
+			cleanup();
+			drawXTicks( ctx, ( squeeze/100) );
+			//timer.stop();
+		}		 
+		 
+		 function drawXTicks( ctx, floatSqueeze ){
+               const __STEP = 10;
+				for ( var x = 0; x < 1000; x++ )
+					drawLine( ctx
+					, ( ( F(x) - x ) * floatSqueeze + x) * __STEP + intOX
+					, 0
+					, ( ( F(x) - x ) * floatSqueeze + x) * __STEP + intOX
+					, ctx.canvas.clientHeight
+					, 0.25
+					, '#808080'
+					);
+					
+				for ( var x = 0; x < 1000; x++ )
+					drawLine( ctx
+					, ( ( F(x) - x ) * floatSqueeze + x) * __STEP + intOX
+					, ctx.canvas.clientHeight / 2 - G ( F ( x ) ) * __STEP
+					, ( ( F(x + 1) - ( x + 1 ) ) * floatSqueeze + ( x + 1 ) ) * __STEP + intOX
+					, ctx.canvas.clientHeight / 2 - G ( F ( x + 1 ) ) * __STEP
+					, 0.25
+					, '#ff0000'
+					);
+					
+		 }
+
+		 function cleanup(){
+            var canvas = document.getElementById('mycanvas');
+            
+            // Make sure we don't execute when canvas isn't supported
+            if (canvas.getContext) {
+			   var ctx = canvas.getContext('2d');
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				intOX = 0;// ctx.canvas.clientWidth/4;
+				drawAxes( ctx );
+			}
+		 }
+		 
+		 function F(x) {
+			//return x*x;
+			//return x;
+			return ( 2 + Math.sin( x / 5 ) ) * 10; 
+		 }
+		 
+		 function G(x) {
+			//return x / 2  + 5.0;
+			//return x * x / 3;
+			return 0.0 + Math.log(x/5) * 10;
+			//return x;
+		 }
+		 
+		 
+      </script>
+   </head>
+   
+   <body id = "test" onload = "drawShape();">
+      <canvas id = "mycanvas" width="1000" height="1000"></canvas>
+	  <input type="button" value="Wipe" onClick="cleanup();"/>
+	  <!--input type="button" value="Next" onClick="nextTickStep();"/>-->
+	  <div class="slidecontainer">
+  <input type="range" min="1" max="100" value="100" class="slider" id="myRange"/>
+</div>
+   </body>
+	  <script>
+		var slider = document.getElementById('myRange');
+		//var output = document.getElementById("demo");
+		//output.innerHTML = slider.value; // Display the default slider value
+
+		// Update the current slider value (each time you drag the slider handle)
+		slider.oninput = function() {
+		  //output.innerHTML = this.value;
+		  nextTickStep( this.value );
+		}	  
+	  </script>
+   
+</html>
