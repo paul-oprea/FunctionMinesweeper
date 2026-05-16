@@ -1,178 +1,324 @@
 <!DOCTYPE HTML>
-
 <html>
-   <head>
-      <title>Exploring Function Composition</title>
-      <style>
-         #mycanvas {
-           .clientWidth: 1000px;
-           .clientHeight:1000px;
-            margin: 0px auto;
-         }
-		.slidecontainer {
-		  width: 100%; /* Width of the outside container */
-		}
-
-		/* The slider itself */
-		.slider {
-		  -webkit-appearance: none;  /* Override default CSS styles */
-		  appearance: none;
-		  width: 100%; /* Full-width */
-		  height: 25px; /* Specified height */
-		  background: #d3d3d3; /* Grey background */
-		  outline: none; /* Remove outline */
-		  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
-		  -webkit-transition: .2s; /* 0.2 seconds transition on hover */
-		  transition: opacity .2s;
-		}
-
-		/* Mouse-over effects */
-		.slider:hover {
-		  opacity: 1; /* Fully shown on mouse-over */
-		}
-
-		/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
-		.slider::-webkit-slider-thumb {
-		  -webkit-appearance: none; /* Override default look */
-		  appearance: none;
-		  width: 25px; /* Set a specific slider handle width */
-		  height: 25px; /* Slider handle height */
-		  background: #04AA6D; /* Green background */
-		  cursor: pointer; /* Cursor on hover */
-		}
-
-		.slider::-moz-range-thumb {
-		  width: 25px; /* Set a specific slider handle width */
-		  height: 25px; /* Slider handle height */
-		  background: #04AA6D; /* Green background */
-		  cursor: pointer; /* Cursor on hover */
-		}		 
-      </style>
-      
-      <script type = "text/javascript">
-		var intOX = 0;
-		
-		function drawAxes(objCtx) {
-			drawLine( objCtx, intOX, 0, intOX, objCtx.canvas.clientHeight, 2, '#000000');
-			drawLine( objCtx, 0, objCtx.canvas.clientHeight/2, objCtx.canvas.clientWidth, objCtx.canvas.clientHeight/2, 2, '#000000');
-		}
-		
-		function drawLine(
-			objCtx
-			, intX0
-			, intY0
-			, intX1
-			, intY1
-			, intLineWidth
-			, strStrokeStyle
-		) {
-			objCtx.beginPath();
-			objCtx.moveTo(intX0, intY0);
-			objCtx.lineTo(intX1, intY1);
-			objCtx.strokeStyle = strStrokeStyle;
-			objCtx.strokeWidth = strStrokeStyle;
-			objCtx.closePath();
-			objCtx.stroke();			
-		}
-
-		var squeeze=10;
-	  
-         function drawShape() {
-            
-            // get the canvas element using the DOM
-            var canvas = document.getElementById('mycanvas');
-            
-            // Make sure we don't execute when canvas isn't supported
-            if (canvas.getContext) {
-               // use getContext to use the canvas for drawing
-			   var ctx = canvas.getContext('2d');
-				drawAxes( ctx );
-
-
-            } else {
-               alert('You need Safari or Firefox 1.5+ to see this demo.');
-            }
-         }
-		 
-		function nextTickStep ( squeeze ) {
-            var canvas = document.getElementById('mycanvas');
-			   var ctx = canvas.getContext('2d');
-			cleanup();
-			drawXTicks( ctx, ( squeeze/100) );
-			//timer.stop();
-		}		 
-		 
-		 function drawXTicks( ctx, floatSqueeze ){
-               const __STEP = 10;
-				for ( var x = 0; x < 1000; x++ )
-					drawLine( ctx
-					, ( ( F(x) - x ) * floatSqueeze + x) * __STEP + intOX
-					, 0
-					, ( ( F(x) - x ) * floatSqueeze + x) * __STEP + intOX
-					, ctx.canvas.clientHeight
-					, 0.25
-					, '#808080'
-					);
-					
-				for ( var x = 0; x < 1000; x++ )
-					drawLine( ctx
-					, ( ( F(x) - x ) * floatSqueeze + x) * __STEP + intOX
-					, ctx.canvas.clientHeight / 2 - G ( F ( x ) ) * __STEP
-					, ( ( F(x + 1) - ( x + 1 ) ) * floatSqueeze + ( x + 1 ) ) * __STEP + intOX
-					, ctx.canvas.clientHeight / 2 - G ( F ( x + 1 ) ) * __STEP
-					, 0.25
-					, '#ff0000'
-					);
-					
-		 }
-
-		 function cleanup(){
-            var canvas = document.getElementById('mycanvas');
-            
-            // Make sure we don't execute when canvas isn't supported
-            if (canvas.getContext) {
-			   var ctx = canvas.getContext('2d');
-				ctx.clearRect(0, 0, canvas.width, canvas.height);
-				intOX = 0;// ctx.canvas.clientWidth/4;
-				drawAxes( ctx );
-			}
-		 }
-		 
-		 function F(x) {
-			//return x*x;
-			//return x;
-			return ( 2 + Math.sin( x / 5 ) ) * 10; 
-		 }
-		 
-		 function G(x) {
-			//return x / 2  + 5.0;
-			//return x * x / 3;
-			return 0.0 + Math.log(x/5) * 10;
-			//return x;
-		 }
-		 
-		 
-      </script>
-   </head>
-   
-   <body id = "test" onload = "drawShape();">
-      <canvas id = "mycanvas" width="1000" height="1000"></canvas>
-	  <input type="button" value="Wipe" onClick="cleanup();"/>
-	  <!--input type="button" value="Next" onClick="nextTickStep();"/>-->
-	  <div class="slidecontainer">
-  <input type="range" min="1" max="100" value="100" class="slider" id="myRange"/>
+<head>
+<title>Function Composition Visualizer</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    overflow: hidden;
+  }
+  #app { display: flex; flex-direction: column; height: 100vh; }
+  #controls {
+    padding: 10px 15px;
+    background: #16213e;
+    border-bottom: 1px solid #0f3460;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .field { display: flex; align-items: center; gap: 6px; }
+  .field label { font-weight: bold; color: #e94560; font-family: 'Courier New', monospace; }
+  input[type=text] {
+    background: #0f3460;
+    border: 1px solid #533483;
+    color: #eee;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    width: 170px;
+    transition: border-color 0.2s;
+  }
+  input[type=text]:focus { outline: none; border-color: #e94560; }
+  button {
+    background: #533483;
+    color: #fff;
+    border: none;
+    padding: 7px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.2s, transform 0.1s;
+  }
+  button:hover { background: #e94560; }
+  button:active { transform: scale(0.96); }
+  .examples { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .examples-label { color: #888; font-size: 12px; margin-right: 4px; }
+  .examples button {
+    background: #0f3460;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+  #sliderRow {
+    padding: 10px 15px;
+    background: #16213e;
+    border-bottom: 1px solid #0f3460;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  #sliderRow label { color: #e94560; font-weight: bold; min-width: 60px; }
+  #warpVal { color: #eee; min-width: 50px; text-align: right; font-family: monospace; }
+  .slider {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 8px;
+    background: linear-gradient(to right, #533483, #e94560);
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+  }
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px; height: 22px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid #e94560;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+  .slider::-moz-range-thumb {
+    width: 22px; height: 22px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid #e94560;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+  #canvasWrap { flex: 1; position: relative; min-height: 0; }
+  canvas { display: block; background: #0a0a1a; }
+  #error { color: #e94560; font-size: 13px; margin-left: 8px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="controls">
+    <div class="field">
+      <label>f(x) =</label>
+      <input type="text" id="fInput" value="sin(x/2)*3+5">
+    </div>
+    <div class="field">
+      <label>g(x) =</label>
+      <input type="text" id="gInput" value="log(x)*2">
+    </div>
+    <button id="applyBtn">Apply</button>
+    <button id="wipeBtn">Wipe</button>
+    <span class="examples">
+      <span class="examples-label">Examples:</span>
+      <button data-f="log(x)" data-g="sin(x)">sin(log x)</button>
+      <button data-f="x^2" data-g="exp(x)">e^(x²)</button>
+      <button data-f="exp(x)" data-g="sin(x)">sin(eˣ)</button>
+      <button data-f="1/x" data-g="x^2">(1/x)²</button>
+      <button data-f="sin(x)" data-g="x^2">sin²(x)</button>
+      <button data-f="x^2-2" data-g="cos(x)">cos(x²−2)</button>
+    </span>
+    <span id="error"></span>
+  </div>
+  <div id="sliderRow">
+    <label>Warp:</label>
+    <input type="range" min="0" max="100" value="100" class="slider" id="warpSlider">
+    <span id="warpVal">100%</span>
+  </div>
+  <div id="canvasWrap">
+    <canvas id="mycanvas"></canvas>
+  </div>
 </div>
-   </body>
-	  <script>
-		var slider = document.getElementById('myRange');
-		//var output = document.getElementById("demo");
-		//output.innerHTML = slider.value; // Display the default slider value
+<script>
+(function(){
+  const canvas = document.getElementById('mycanvas');
+  const ctx = canvas.getContext('2d');
+  const fInput = document.getElementById('fInput');
+  const gInput = document.getElementById('gInput');
+  const slider = document.getElementById('warpSlider');
+  const warpVal = document.getElementById('warpVal');
+  const errorEl = document.getElementById('error');
 
-		// Update the current slider value (each time you drag the slider handle)
-		slider.oninput = function() {
-		  //output.innerHTML = this.value;
-		  nextTickStep( this.value );
-		}	  
-	  </script>
-   
+  let f = x => x, g = x => x;
+  let scale = 40;            // pixels per math unit
+  let originX = 0, originY = 0;
+
+  function compile(expr) {
+    // Allow ^ as exponentiation, supply Math constants/functions via with()
+    const safe = expr.replace(/\^/g, '**');
+    return new Function('x', `with(Math){return (${safe});}`);
+  }
+
+  function applyFunctions() {
+    try {
+      const f2 = compile(fInput.value);
+      const g2 = compile(gInput.value);
+      f2(1); g2(1); // sanity
+      f = f2; g = g2;
+      errorEl.textContent = '';
+      draw();
+    } catch(e) {
+      errorEl.textContent = 'Error: ' + e.message;
+    }
+  }
+
+  function resize() {
+    const wrap = document.getElementById('canvasWrap');
+    const dpr = window.devicePixelRatio || 1;
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    canvas.width  = w * dpr;
+    canvas.height = h * dpr;
+    canvas.style.width  = w + 'px';
+    canvas.style.height = h + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    originX = w / 2;
+    originY = h / 2;
+    // Auto-pick a sensible scale
+    scale = Math.max(20, Math.min(w, h) / 20);
+    draw();
+  }
+
+  const SX = u => originX + u * scale;
+  const SY = v => originY - v * scale;
+
+  function drawGrid() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    const xMin = -originX / scale, xMax = (w - originX) / scale;
+    const yMin = -(h - originY) / scale, yMax = originY / scale;
+
+    ctx.strokeStyle = '#1f1f3a';
+    ctx.lineWidth = 1;
+    for (let i = Math.ceil(xMin); i <= Math.floor(xMax); i++) {
+      ctx.beginPath();
+      ctx.moveTo(SX(i), 0); ctx.lineTo(SX(i), h);
+      ctx.stroke();
+    }
+    for (let i = Math.ceil(yMin); i <= Math.floor(yMax); i++) {
+      ctx.beginPath();
+      ctx.moveTo(0, SY(i)); ctx.lineTo(w, SY(i));
+      ctx.stroke();
+    }
+    // Axes
+    ctx.strokeStyle = '#666';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(SX(0), 0); ctx.lineTo(SX(0), h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, SY(0)); ctx.lineTo(w, SY(0)); ctx.stroke();
+
+    // Tick labels
+    ctx.fillStyle = '#666';
+    ctx.font = '11px monospace';
+    ctx.textAlign = 'center';
+    for (let i = Math.ceil(xMin); i <= Math.floor(xMax); i++) {
+      if (i === 0) continue;
+      ctx.fillText(i, SX(i), SY(0) + 13);
+    }
+    ctx.textAlign = 'right';
+    for (let i = Math.ceil(yMin); i <= Math.floor(yMax); i++) {
+      if (i === 0) continue;
+      ctx.fillText(i, SX(0) - 4, SY(i) + 4);
+    }
+  }
+
+  function plotCurve(fn, color, lineWidth, mapX) {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    const xMin = -originX / scale, xMax = (w - originX) / scale;
+    const N = Math.max(600, w * 2);
+    const dx = (xMax - xMin) / N;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.beginPath();
+    let started = false, prevSy = 0;
+    for (let i = 0; i <= N; i++) {
+      const x = xMin + i * dx;
+      let y, sx;
+      try {
+        y = fn(x);
+        sx = mapX ? SX(mapX(x)) : SX(x);
+      } catch(e) { started = false; continue; }
+      if (!isFinite(y)) { started = false; continue; }
+      const sy = SY(y);
+      // Break on huge jumps (asymptotes)
+      if (started && Math.abs(sy - prevSy) > h) { started = false; }
+      if (!started) { ctx.moveTo(sx, sy); started = true; }
+      else ctx.lineTo(sx, sy);
+      prevSy = sy;
+    }
+    ctx.stroke();
+  }
+
+  function draw() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    ctx.clearRect(0, 0, w, h);
+    drawGrid();
+
+    const t = parseFloat(slider.value) / 100;
+    const xMin = -originX / scale, xMax = (w - originX) / scale;
+
+    // Warped vertical "fibers" — visualize how f maps each x
+    ctx.strokeStyle = 'rgba(150, 100, 220, 0.35)';
+    ctx.lineWidth = 0.7;
+    const fibers = 80;
+    const step = (xMax - xMin) / fibers;
+    for (let k = 0; k <= fibers; k++) {
+      const x = xMin + k * step;
+      let fx;
+      try { fx = f(x); } catch(e) { continue; }
+      if (!isFinite(fx)) continue;
+      const wx = x + t * (fx - x);
+      const sx = SX(wx);
+      if (sx < -10 || sx > w + 10) continue;
+      ctx.beginPath();
+      ctx.moveTo(sx, 0); ctx.lineTo(sx, h);
+      ctx.stroke();
+    }
+
+    // Reference: plain g(x)
+    plotCurve(x => g(x), 'rgba(100, 200, 255, 0.55)', 1.5);
+
+    // Warped composition: at position x + t*(f(x)-x), height g(f(x))
+    plotCurve(x => g(f(x)), '#e94560', 2.2, x => {
+      let fx; try { fx = f(x); } catch(e){ return NaN; }
+      return x + t * (fx - x);
+    });
+
+    // Legend
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(100, 200, 255, 0.9)';
+    ctx.fillText('━ g(x)', 15, 22);
+    ctx.fillStyle = '#e94560';
+    ctx.fillText(`━ g(f(x))  ${t === 0 ? '[composition]' : t === 1 ? '[unwarped → g]' : '[warping]'}`, 15, 42);
+    ctx.fillStyle = 'rgba(150, 100, 220, 0.9)';
+    ctx.fillText('┃ domain fibers', 15, 62);
+  }
+
+  // Events
+  slider.addEventListener('input', () => {
+    warpVal.textContent = slider.value + '%';
+    draw();
+  });
+  document.getElementById('applyBtn').addEventListener('click', applyFunctions);
+  document.getElementById('wipeBtn').addEventListener('click', () => {
+    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    drawGrid();
+  });
+  [fInput, gInput].forEach(el => {
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') applyFunctions(); });
+  });
+  document.querySelectorAll('.examples button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      fInput.value = btn.dataset.f;
+      gInput.value = btn.dataset.g;
+      applyFunctions();
+    });
+  });
+  window.addEventListener('resize', resize);
+
+  // Init
+  applyFunctions();
+  resize();
+})();
+</script>
+</body>
 </html>
